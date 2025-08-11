@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import MediChecker.MediChecker.dto.request.PrescriptionRequest;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.util.Map;
 
 @RestController
@@ -61,5 +64,11 @@ public class PhanTichController {
         
         PhanTichResponse result = phanTichService.phanTichKhongHopLy(diagnosisCode, prescriptionId);
         return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/prescription")
+    @Operation(summary = "Phân tích đơn thuốc đúng", description = "Phân tích thuốc khi kê cho bệnh nhân")
+    public JsonNode analyze(@RequestBody PrescriptionRequest request) throws Exception {
+        return phanTichService.analyzePrescription(request);
     }
 }

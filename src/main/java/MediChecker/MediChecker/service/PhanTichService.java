@@ -9,6 +9,7 @@ import MediChecker.MediChecker.repository.BenhNhanRepository;
 import MediChecker.MediChecker.repository.DiUngThuocRepository;
 import MediChecker.MediChecker.repository.DonThuocRepository;
 import MediChecker.MediChecker.repository.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import MediChecker.MediChecker.dto.request.PrescriptionRequest;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -208,5 +220,165 @@ public class PhanTichService {
         response.setDangBaoChe(thuoc.getDangBaoChe());
         response.setNhomThuoc(thuoc.getNhomThuoc());
         return response;
+    }
+
+//    @Value("${openai.api.key}")
+//    private String openaiApiKey;
+//
+//    @Value("${openai.api.url}")
+//    private String openaiApiUrl;
+//
+//    private final ObjectMapper objectMapper = new ObjectMapper();
+//
+//    public JsonNode analyzePrescription(PrescriptionRequest request) throws Exception {
+//        String prompt = buildPrompt(request);
+//
+//        // Build request body cho OpenAI
+//        Map<String, Object> requestBody = new HashMap<>();
+//        requestBody.put("model", "gpt-4o-mini");
+//        requestBody.put("messages", new Object[]{
+//                Map.of("role", "system", "content", "Bạn là một bác sĩ hỗ trợ phân tích đơn thuốc dựa trên hồ sơ bệnh nhân. Trả về JSON như yêu cầu."),
+//                Map.of("role", "user", "content", prompt)
+//        });
+//        requestBody.put("temperature", 0);
+//
+//        RestTemplate restTemplate = new RestTemplate();
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        headers.setBearerAuth(openaiApiKey);
+//
+//        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+//
+//        System.out.println("URL: " + openaiApiUrl);
+//        System.out.println("API Key: " + (openaiApiKey != null ? "OK" : "NULL"));
+//        System.out.println("Request Body: " + objectMapper.writeValueAsString(requestBody));
+//
+//        ResponseEntity<String> response = restTemplate.exchange(
+//                openaiApiUrl,
+//                HttpMethod.POST,
+//                entity,
+//                String.class
+//        );
+//
+//        JsonNode root = objectMapper.readTree(response.getBody());
+//        String content = root.path("choices").get(0).path("message").path("content").asText();
+//
+//        // Parse JSON trả về từ AI
+//        return objectMapper.readTree(content);
+//    }
+//
+//    private String buildPrompt(PrescriptionRequest req) throws JsonProcessingException {
+//        String prescriptionJson = objectMapper.writeValueAsString(req.getPrescription_list());
+//        String allergiesJson = objectMapper.writeValueAsString(req.getAllergies());
+//        String medicalHistoryJson = objectMapper.writeValueAsString(req.getMedical_history());
+//
+//        return """
+//Dưới đây là dữ liệu bệnh nhân:
+//- Đơn thuốc: %s
+//- Dị ứng: %s
+//- Bệnh lý nền: %s
+//
+//Nhiệm vụ:
+//1. Đánh giá mức độ phù hợp của đơn thuốc với bệnh nhân.
+//2. Liệt kê nguy cơ tương tác hoặc chống chỉ định.
+//3. Đưa ra khuyến nghị thay thế nếu cần.
+//
+//Trả về kết quả ở dạng JSON với format:
+//{
+//  "overall_risk": "low|medium|high",
+//  "risk_reasons": ["..."],
+//  "drug_analysis": [
+//    {"drug_name": "...", "risk": "low|medium|high", "reason": "..."}
+//  ],
+//  "recommendations": ["..."]
+//}
+//""".formatted(prescriptionJson, allergiesJson, medicalHistoryJson);
+//
+//    }
+@Value("${groq.api.key}")
+private String groqApiKey;
+
+    @Value("${groq.api.url}")
+    private String groqApiUrl;
+
+    @Value("${groq.model}")
+    private String groqModel;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public JsonNode analyzePrescription(PrescriptionRequest request) throws Exception {
+        String prompt = buildPrompt(request);
+
+        // Body request cho Groq (API format giống OpenAI)
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", groqModel);
+
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content",
+                "Bạn là một bác sĩ hỗ trợ phân tích đơn thuốc dựa trên hồ sơ bệnh nhân. Trả về JSON như yêu cầu."));
+        messages.add(Map.of("role", "user", "content", prompt));
+
+        requestBody.put("messages", messages);
+        requestBody.put("temperature", 0);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(groqApiKey);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                groqApiUrl,
+                HttpMethod.POST,
+                entity,
+                String.class
+        );
+
+        JsonNode root = objectMapper.readTree(response.getBody());
+        String content = root.path("choices").get(0).path("message").path("content").asText();
+
+// Tìm phần JSON trong content
+        int startIndex = content.indexOf("{");
+        int endIndex = content.lastIndexOf("}");
+        if (startIndex >= 0 && endIndex >= 0) {
+            content = content.substring(startIndex, endIndex + 1);
+        } else {
+            throw new RuntimeException("Không tìm thấy JSON hợp lệ trong kết quả AI");
+        }
+
+// Parse lại
+        return objectMapper.readTree(content);
+    }
+
+    private String buildPrompt(PrescriptionRequest req) throws Exception {
+        String prescriptionJson = objectMapper.writeValueAsString(req.getPrescription_list());
+        String allergiesJson = objectMapper.writeValueAsString(req.getAllergies());
+        String medicalHistoryJson = objectMapper.writeValueAsString(req.getMedical_history());
+
+        return """
+        Dưới đây là dữ liệu bệnh nhân:
+        - Đơn thuốc: %s
+        - Dị ứng: %s
+        - Bệnh lý nền: %s
+
+        Nhiệm vụ:
+        1. Đánh giá mức độ phù hợp của đơn thuốc với bệnh nhân.
+        2. Liệt kê nguy cơ tương tác hoặc chống chỉ định.
+        3. Đưa ra khuyến nghị thay thế nếu cần.
+
+        Trả về kết quả duy nhất ở dạng JSON hợp lệ, KHÔNG thêm giải thích hoặc bất kỳ chữ nào ngoài JSON.
+        JSON format:
+        {
+          "overall_risk": "low|medium|high",
+          "risk_reasons": ["..."],
+          "drug_analysis": [
+            {"drug_name": "...", "risk": "low|medium|high", "reason": "..."}
+          ],
+          "recommendations": ["..."]
+        }
+        """.formatted(prescriptionJson, allergiesJson, medicalHistoryJson);
     }
 }
