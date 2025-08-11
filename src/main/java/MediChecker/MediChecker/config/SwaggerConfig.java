@@ -16,6 +16,12 @@ public class SwaggerConfig {
     private String swaggerServerUrl;
     @Bean
     public OpenAPI customOpenAPI() {
+
+        String serverUrl = System.getenv("SWAGGER_SERVER_URL");
+        if (serverUrl == null || serverUrl.isBlank()) {
+            serverUrl = "http://localhost:8080";
+        }
+
         return new OpenAPI()
                 .info(new Info()
                         .title("Hệ Thống Quản Lý Bệnh Nhân API")
@@ -25,7 +31,7 @@ public class SwaggerConfig {
                                 .name("Hospital Management Team")
                                 .email("support@hospital.com")))
                 .servers(List.of(
-                        new Server().url("http://10.136.83.51:"+swaggerServerUrl+"/").description("Development Server")
+                        new Server().url(serverUrl).description("Development Server")
                 ));
     }
 }
