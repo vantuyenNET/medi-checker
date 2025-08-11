@@ -222,82 +222,8 @@ public class PhanTichService {
         return response;
     }
 
-//    @Value("${openai.api.key}")
-//    private String openaiApiKey;
-//
-//    @Value("${openai.api.url}")
-//    private String openaiApiUrl;
-//
-//    private final ObjectMapper objectMapper = new ObjectMapper();
-//
-//    public JsonNode analyzePrescription(PrescriptionRequest request) throws Exception {
-//        String prompt = buildPrompt(request);
-//
-//        // Build request body cho OpenAI
-//        Map<String, Object> requestBody = new HashMap<>();
-//        requestBody.put("model", "gpt-4o-mini");
-//        requestBody.put("messages", new Object[]{
-//                Map.of("role", "system", "content", "Bạn là một bác sĩ hỗ trợ phân tích đơn thuốc dựa trên hồ sơ bệnh nhân. Trả về JSON như yêu cầu."),
-//                Map.of("role", "user", "content", prompt)
-//        });
-//        requestBody.put("temperature", 0);
-//
-//        RestTemplate restTemplate = new RestTemplate();
-//
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setContentType(MediaType.APPLICATION_JSON);
-//        headers.setBearerAuth(openaiApiKey);
-//
-//        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-//
-//        System.out.println("URL: " + openaiApiUrl);
-//        System.out.println("API Key: " + (openaiApiKey != null ? "OK" : "NULL"));
-//        System.out.println("Request Body: " + objectMapper.writeValueAsString(requestBody));
-//
-//        ResponseEntity<String> response = restTemplate.exchange(
-//                openaiApiUrl,
-//                HttpMethod.POST,
-//                entity,
-//                String.class
-//        );
-//
-//        JsonNode root = objectMapper.readTree(response.getBody());
-//        String content = root.path("choices").get(0).path("message").path("content").asText();
-//
-//        // Parse JSON trả về từ AI
-//        return objectMapper.readTree(content);
-//    }
-//
-//    private String buildPrompt(PrescriptionRequest req) throws JsonProcessingException {
-//        String prescriptionJson = objectMapper.writeValueAsString(req.getPrescription_list());
-//        String allergiesJson = objectMapper.writeValueAsString(req.getAllergies());
-//        String medicalHistoryJson = objectMapper.writeValueAsString(req.getMedical_history());
-//
-//        return """
-//Dưới đây là dữ liệu bệnh nhân:
-//- Đơn thuốc: %s
-//- Dị ứng: %s
-//- Bệnh lý nền: %s
-//
-//Nhiệm vụ:
-//1. Đánh giá mức độ phù hợp của đơn thuốc với bệnh nhân.
-//2. Liệt kê nguy cơ tương tác hoặc chống chỉ định.
-//3. Đưa ra khuyến nghị thay thế nếu cần.
-//
-//Trả về kết quả ở dạng JSON với format:
-//{
-//  "overall_risk": "low|medium|high",
-//  "risk_reasons": ["..."],
-//  "drug_analysis": [
-//    {"drug_name": "...", "risk": "low|medium|high", "reason": "..."}
-//  ],
-//  "recommendations": ["..."]
-//}
-//""".formatted(prescriptionJson, allergiesJson, medicalHistoryJson);
-//
-//    }
-@Value("${groq.api.key}")
-private String groqApiKey;
+    @Value("${groq.api.key}")
+    private String groqApiKey;
 
     @Value("${groq.api.url}")
     private String groqApiUrl;
