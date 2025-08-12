@@ -155,10 +155,10 @@ public class BenhNhanService {
         return response;
     }
 
-    private List<DiUngThuocRespone>  convertToResponseDiUngThuocR(List<DiUngThuoc> diUngThuocs) {
-        List<DiUngThuocRespone> responses = new ArrayList<>();
+    private List<DiUngThuocResponse>  convertToResponseDiUngThuocR(List<DiUngThuoc> diUngThuocs) {
+        List<DiUngThuocResponse> responses = new ArrayList<>();
         for (DiUngThuoc diUngThuoc : diUngThuocs) {
-            DiUngThuocRespone response = new DiUngThuocRespone();
+            DiUngThuocResponse response = new DiUngThuocResponse();
             response.setId(diUngThuoc.getId());
             response.setThuoc(convertToResponseThuoc(diUngThuoc.getThuoc()));
             response.setTrieuChung(diUngThuoc.getTrieuChung());

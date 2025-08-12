@@ -56,7 +56,7 @@ public class ChiTietBenhNhanResponse {
     private List<BenhLyNenRespone> danhSachBenhLyNen;
 
     @Schema(description = "Danh sách dị ứng")
-    private List<DiUngThuocRespone> danhSachDiUng;
+    private List<DiUngThuocResponse> danhSachDiUng;
 
     @Schema(description = "Danh sách điều trị")
     private List<DieuTriResponse> danhSachDieuTri;
